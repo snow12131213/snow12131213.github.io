@@ -17,6 +17,7 @@
 	const row = 5;
 
 	var edit = false;
+	var cnt = 0;
 
 	function toggle(e) {
 		if ($(e).hasClass("on")) {
@@ -117,6 +118,7 @@
 			let pt = id.split("-");
 			let section = $(".section").val() - 0;
 			normalClickEvent(pt[0] - 0, pt[1] - 0);
+			cnt++;
 			judge();
 		});
 		if (r) {
