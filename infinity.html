@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>SYSTEM TEST</title>
+	<meta http-equiv="Content-Type" content="text/xml; charset=utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<script>
+	const threshold = 0.5;
+	var column = 5;
+	var row = 5;
+	const maxStep = 5;
+
+	function toggle(e) {
+		if ($(e).hasClass("on")) {
+			$(e).removeClass("on");
+			$(e).addClass("off");
+		} else {
+			$(e).removeClass("off");
+			$(e).addClass("on");
+		}
+	}
+
+	const answer = {
+		1:["1-1", "1-2", "2-1"],
+		2:["1-5", "1-4", "2-5"],
+		3:["5-5", "5-4", "4-5"],
+		4:["5-1", "5-2", "4-1"]
+	};
+
+	function judge() {
+		let section = $(".section").val();
+		let ans = answer[section];
+		if (section > maxStep || ans == void 0 ) {
+			return false;
+		}
+		var fail = false;
+		if ($(".on").length == ans.length) {
+			$($(".on")).each(function(){
+				if (ans.indexOf($(this).attr("id")) < 0) {
+					console.log($(this).attr("id"));
+					fail = true;
+					return false;
+				}
+			});
+			if (!fail) {
+				$("#msg").text("success");
+				console.log("true");
+				setTimeout(function(){
+					sectionChange(section);
+				}, 2000);
+				return true;
+			}
+		}
+		console.log("false");
+		return false;
+	}
+
+	function sectionChange(section) {
+		let next = section - 0 + 1;
+		clear();
+		if (next <= maxStep) {
+			// question image visiblity switch
+			$(".section").val(next);
+		} else if (next > maxStep) {
+			// goal
+			$("#msg").text("goal");
+		}
+	}
+
+	function gridGenerate(r, l) {
+		$("#frame tbody").empty();
+		for (let i = 1; i <= row; i++) {
+			let rowId = "row" + i;
+			$("#frame tbody").append("<tr id='" + rowId + "'></tr>");
+			for (let j = column; j > 0; j--) {
+				let cellId = "" + i + "-" + j;
+				$("#" + rowId).append("<td id='" + cellId + "' class='cell'></td>");
+			}
+		}
+		$(".cell").on("click", function(e){
+			let id = $(this).attr("id");
+			let pt = id.split("-");
+			toggle("#"+ pt[0] + "-" + pt[1]);
+			if (pt[0] - 1 > 0) {
+				toggle("#"+ (pt[0] - 1) + "-" + pt[1]);
+			}
+			if (pt[1] - 1 > 0) {
+				toggle("#"+ pt[0] + "-" + (pt[1] - 1));
+			}
+			if ((pt[0] - 0 + 1) <= row) {
+				toggle("#"+ (pt[0] - 0 + 1) + "-" + pt[1]);
+			}
+			if ((pt[1] - 0 + 1) <= column) {
+				toggle("#"+ pt[0] + "-" + (pt[1] - 0 + 1));
+			}
+			judge();
+		});
+		if (r) {
+			randomize();
+		} else {
+			setup(l);
+		}
+	};
+
+	function clear() {
+		$(".cell").each(function(){
+			$(this).removeClass("on");
+			$(this).addClass("off");
+		});
+		$("#msg").text("");
+	}
+
+	function setup(l) {
+		if (l.length > 0) {
+			$(".cell").each(function(){
+				let id = $(this).attr("id");
+				$("#" + id).removeClass(l.indexOf(id) >= 0 ? "off" : "on");
+				$("#" + id).addClass(l.indexOf(id) >= 0 ? "on" : "off");
+			});
+		}
+	}
+
+	function randomize() {
+		for (let i = 1; i <= row; i++) {
+			for (let j = column; j > 0; j--) {
+				let d = Math.random() < threshold;
+				$("#" + i + "-" + j).removeClass(d ? "on" : "off");
+				$("#" + i + "-" + j).addClass(d ? "off" : "on");
+			}
+		}
+	}
+
+	$(function(){
+		$("#frame").height($("#frame").width());
+		gridGenerate(false, []);
+	});
+</script>
+<style>
+#main{
+	background-color:white;
+}
+#frame{
+	max-width: 200px;
+	width: 100%;
+}
+.on{
+	background-color:yellow;
+}
+.off{
+	background-color:white;
+}
+</style>
+<body>
+<div id="main">
+	<input class="section" hidden=true value="1" />
+	<table id="frame" border="1"><tbody></tbody></table>
+	<div id="msg"></div>
+	<button onclick="gridGenerate(true, null)">生成</button>
+</div>
+</body>
+</html>

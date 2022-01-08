@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>白ノ世界</title>
+	<meta http-equiv="Content-Type" content="text/xml; charset=utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<script>
+	const threshold = 0.5;
+	const maxStep = 1;
+
+	const column = 5;
+	const row = 5;
+
+	var clickCount = 0;
+	var edit = false;
+
+	function toggle(e) {
+		if ($(e).hasClass("on")) {
+			$(e).removeClass("on");
+			$(e).addClass("off");
+		} else {
+			$(e).removeClass("off");
+			$(e).addClass("on");
+		}
+	}
+
+	const answer = {
+			1:[25, ""],
+	};
+
+	const setupList = {
+			1:["1-1","1-2","1-4","2-2","2-4","2-5","3-3","3-4","4-1","4-4","4-3","4-5","5-1","5-2","5-3","5-3"],
+	};
+
+	function judge() {
+		let section = $(".section").val() - 0;
+		let ans = answer[section];
+		if (section > maxStep || ans == void 0 ) {
+			return false;
+		}
+		let fail = false;
+		if ($("#frame .on").length == ans[0]) {
+			sectionChange(section);
+			return true;
+		}
+		return false;
+	}
+
+	function sectionChange(section) {
+		let next = section - 0 + 1;
+		if (setupList[next] != void 0) {
+			clear();
+			$(".section").val(next);
+			setup(setupList[next]);
+		} else if (next > maxStep) {
+			// goal
+			$("#sectionClear").css("display", "");
+			$("#msg").text("clear!");
+		}
+	}
+
+	function normalClickEvent(x, y, prefix = "", ng = [], up = true, right = true, left = true, down = true) {
+		if (ng.indexOf(x + "-" + y) < 0) {
+			toggle("#" + prefix + x + "-" + y);
+			if (!edit || prefix == "") {
+				if (up && x - 1 > 0) {
+					toggle("#" + prefix + (x - 1) + "-" + y);
+				}
+				if (right && y - 1 > 0) {
+					toggle("#" + prefix + x + "-" + (y - 1));
+				}
+				if (down && (x + 1) <= row) {
+					toggle("#" + prefix + (x + 1) + "-" + y);
+				}
+				if (left && (y + 1) <= column) {
+					toggle("#" + prefix + x + "-" + (y + 1));
+				}
+			}
+		}
+	}
+
+	function gridGenerate(r, l) {
+		$("#frame tbody").empty();
+		for (let i = 1; i <= row; i++) {
+			let rowId = "row" + i;
+			$("#frame tbody").append("<tr id='" + rowId + "'></tr>");
+			for (let j = 1; j <= column; j++) {
+				let cellId = "" + i + "-" + j;
+				$("#" + rowId).append("<td id='" + cellId + "' class='cell'></td>");
+			}
+		}
+		$(".cell").on("click", function(e){
+			clickCount++;
+			let id = $(this).attr("id");
+			let pt = id.split("-");
+			let section = $(".section").val() - 0;
+			normalClickEvent(pt[0] - 0, pt[1] - 0);
+			statusUpdate();
+			judge();
+		});
+		if (r) {
+			randomize();
+		} else {
+			setup(l);
+		}
+		statusUpdate();
+	};
+
+	function statusUpdate() {
+		$("#clickcnt").text(clickCount);
+		$("#totalcnt").text($("#frame .on").length);
+	}
+
+	function freeGridGenerate() {
+		$("#freeframe tbody").empty();
+		for (let i = 1; i <= row; i++) {
+			let rowId = "frow" + i;
+			$("#freeframe tbody").append("<tr id='" + rowId + "'></tr>");
+			for (let j = 1; j <= column; j++) {
+				let cellId = "" + i + "-" + j;
+				$("#" + rowId).append("<td id='f" + cellId + "' class='cell2'></td>");
+			}
+		}
+		$(".cell2").on("click", function(e){
+			let id = $(this).attr("id");
+			let pt = id.substring(1).split("-");
+			normalClickEvent(pt[0] - 0, pt[1] - 0, "f");
+			if (!edit) {
+				updateHistory($(this).val());
+			}
+		});
+		setupFreeGrid("ABCDEFGHIJKLMNOPQRSTUVWXY");
+	};
+
+	function updateHistory(str) {
+		if ($("#history").text().indexOf(str) < 0) {
+			$("#history").append(str);
+		} else {
+			$("#history").text($("#history").text().replace(str, ""));
+		}
+	}
+
+	function setupFreeGrid(lstr) {
+		let cnt = 0;
+		for (let i = 1; i <= row; i++) {
+			for (let j = 1; j <= column; j++) {
+				$("#f" + i + "-" + j).append(lstr.substring(cnt, cnt+1));
+				$("#f" + i + "-" + j).val(lstr.substring(cnt, cnt+1));
+				cnt++;
+			}
+		}
+	}
+
+	function clear() {
+		$(".cell").each(function(){
+			$(this).removeClass("on");
+			$(this).addClass("off");
+		});
+		$("#msg").text("");
+	}
+
+	function setup(l) {
+		if (l.length > 0) {
+			$(".cell").each(function(){
+				let id = $(this).attr("id");
+				$("#" + id).removeClass(l.indexOf(id) >= 0 ? "off" : "on");
+				$("#" + id).addClass(l.indexOf(id) >= 0 ? "on" : "off");
+			});
+		}
+	}
+
+	function randomize(prefix = "") {
+		for (let i = 1; i <= row; i++) {
+			for (let j = column; j > 0; j--) {
+				let d = Math.random() < threshold;
+				$("#" + prefix + i + "-" + j).removeClass(d ? "on" : "off");
+				$("#" + prefix + i + "-" + j).addClass(d ? "off" : "on");
+			}
+		}
+	}
+
+	function changeEditable() {
+		edit = !edit;
+		$("#changeEdit").removeClass(edit ? "b_off" : "b_on");
+		$("#changeEdit").addClass(edit ? "b_on" : "b_off");
+	}
+
+	$(function(){
+		$("#frame").height($("#frame").width());
+		$("#freeframe").height($("#freeframe").width());
+		$("#status").height($("#frame").height()/6);
+		$("#history").width($("#historyDiv").width() - 50);
+		gridGenerate(false, setupList[1]);
+		freeGridGenerate();
+		$(".cell").width($("#1-1").width());
+
+		$(".cell2").width($("#f1-1").width());
+		$("#clearHistory").on("click", function() {
+			$("#history").text("");
+		});
+	});
+</script>
+<style>
+#main{
+	background-color:white;
+}
+#frame, #freeframe, #status, #historyDiv{
+	max-width: 400px;
+	width: 100%;
+}
+#frame {
+	color:white;
+}
+#history {
+	float: left;
+	height: 30px;
+}
+#clearHistory {
+	float: right;
+	width: 30px;
+	height: 30px;
+	margin-bottom:10px;
+}
+.cell, .cell2 {
+	margin: auto;
+	text-align: center;
+}
+#frame .on{
+	background-color:yellow;
+}
+#frame .off{
+	background-color:white;
+}
+#freeframe .on{
+	background-color:yellow;
+}
+#freeframe .off{
+	background-color:white;
+}
+.b_on{
+}
+.b_off{
+}
+</style>
+<body>
+<div id="main">
+	<input class="section" hidden=true value="1" />
+	<table id="status" style="margin-bottom: 5px;" border="1"><tbody><tr>
+		<td id="clickcnt" style="text-align: center;font-size: xx-large;width:33%;"></td>
+		<td id="totalcnt" style="text-align: center;font-size: xx-large;width:33%;"></td>
+		<td style="width:34%;"><div id="sectionClear" style="display:none">goal</div></td>
+	</tr></tbody></table>
+	<table id="frame" border="1"><tbody></tbody></table>
+	<div id="msg"></div>
+</div>
+<br/><br/>
+<div id="free">
+	<div id="historyDiv" style="height:30px">
+		<div id="history"></div>
+		<button id="clearHistory">X</button>
+	</div>
+	<table id="freeframe" border="1"><tbody></tbody></table>
+	<button id="changeEdit" style="margin:5px;float:right;width:100px;height:50px" onclick="changeEditable()">Edit</button>
+	<button id="randomize" style="margin:5px;float:right;width:100px;height:50px" onclick="randomize('f')">Random</button>
+</div>
+</body>
+</html>
