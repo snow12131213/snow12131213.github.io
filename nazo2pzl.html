@@ -8,6 +8,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+	<script src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </head>
 <script>
 	const threshold = 0.5;
@@ -77,9 +78,17 @@
 			$(".section").val(next);
 			setup(setupList[next]);
 		} else if (next > maxStep) {
-			$("#msg").text("clear!");
-			let str = '<a href="//twitter.com/share" class="twitter-share-button" data-text="なぞ謎パズルを' + cnt + '手でクリアした！" data-url="https://snow12131213.github.io/nazo2pzl.html" data-lang="ja"></a>';
-			$("#msg").appendHtml(str);
+			$("#mt").css("display", "");
+			$('#twtr').empty();
+			twttr.widgets.createShareButton("",
+				document.getElementById("twtr"),
+				{
+					size: "large",
+					text: "なぞ謎パズルを" + cnt + "手でクリアした！",
+					hashtags: "snow謎_n2p",
+					url: "https://snow12131213.github.io/nazo2pzl.html"
+				}
+			);
 		}
 	}
 
@@ -220,6 +229,15 @@
 		$("#clearHistory").on("click", function() {
 			$("#history").text("");
 		});
+		twttr.widgets.createShareButton("",
+			document.getElementById("twtr"),
+			{
+				size: "large",
+				text: "なぞ謎パズル",
+				hashtags: "snow謎_n2p",
+				url: "https://snow12131213.github.io/nazo2pzl.html"
+			}
+		);
 	});
 </script>
 <style>
@@ -281,8 +299,11 @@
 <div class="title">なぞ謎パズル</div>
 <div id="main">
 	<input class="section" hidden=true value="1" />
+	<div id="msg" style="margin-top:3px;font-size:xx-large;">
+		<span id="mt" style="display:none;">Congratulations!</span>
+		<div id="twtr"></div>
+	</div>
 	<table id="frame" border="1"><tbody></tbody></table>
-	<div id="msg"></div>
 </div>
 <br/><br/>
 <div style="max-width: 400px;width: 100%;border-bottom: 2px solid #000000;height: 3px;"></div>
